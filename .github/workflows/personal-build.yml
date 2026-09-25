@@ -1,0 +1,96 @@
+name: Sync and release personal Helium for macOS
+
+on:
+  schedule:
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: personal-macos-build
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.update.outputs.revision }}
+      changed: ${{ steps.update.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge macOS upstream and select patched Helium
+        id: update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          previous=$(git rev-parse HEAD)
+          git remote add upstream https://github.com/imputnet/helium-macos.git
+          git fetch upstream main
+          git merge --no-edit upstream/main
+          git submodule sync
+          git submodule update --init
+          git -C helium-chromium remote set-url origin https://github.com/RTLiang/helium.git
+          git -C helium-chromium fetch origin main
+          git -C helium-chromium checkout --detach FETCH_HEAD
+          git add helium-chromium
+          if ! git diff --cached --quiet; then
+            git commit -m 'build: use latest patched Helium'
+          fi
+          revision=$(git rev-parse HEAD)
+          if [ "$revision" = "$previous" ]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            git push origin HEAD:main
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: sync
+    if: ${{ needs.sync.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/building.yml
+    secrets: inherit
+    with:
+      arch: arm64
+      os: macos-latest
+      ref: ${{ needs.sync.outputs.revision }}
+
+  release:
+    needs: [sync, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: helium_*_arm64-macos.dmg
+          path: release_asset
+          merge-multiple: true
+      - name: Publish personal arm64 DMG
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REVISION: ${{ needs.sync.outputs.revision }}
+        run: |
+          set -euo pipefail
+          dmg=$(find release_asset -maxdepth 1 -name '*.dmg' -print -quit)
+          test -n "$dmg"
+          tag="personal-${REVISION:0:12}"
+          notes="Personal arm64 build from macOS commit $REVISION. The app is ad hoc signed and is not notarized."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$dmg" --clobber
+          else
+            gh release create "$tag" "$dmg" \
+              --target "$REVISION" \
+              --title "Personal Helium arm64 ${REVISION:0:12}" \
+              --notes "$notes" \
+              --prerelease
+          fi

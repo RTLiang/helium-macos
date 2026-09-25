@@ -16,6 +16,10 @@ on:
       os:
         required: true
         type: string
+      ref:
+        required: false
+        type: string
+        default: ''
 
 jobs:
   retrieve-resources:
@@ -27,6 +31,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
+          ref: ${{ inputs.ref || github.sha }}
       - uses: ./.github/actions/prepare-environment
       - name: Download and unpack required resources
         run: |
@@ -49,6 +54,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
 
   build_job_02:
     needs: build_job_01
@@ -58,6 +64,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_03:
@@ -68,6 +75,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_04:
@@ -78,6 +86,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_05:
@@ -88,6 +97,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_06:
@@ -98,6 +108,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_07:
@@ -108,6 +119,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_08:
@@ -118,6 +130,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_09:
@@ -128,6 +141,7 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true
 
   build_job_10:
@@ -138,4 +152,5 @@ jobs:
     with:
       arch: ${{ inputs.arch }}
       os: ${{ inputs.os }}
+      ref: ${{ inputs.ref }}
       resume: true

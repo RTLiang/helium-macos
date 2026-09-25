@@ -16,6 +16,10 @@ on:
       os:
         required: true
         type: string
+      ref:
+        required: false
+        type: string
+        default: ''
       resume:
         required: false
         type: boolean
@@ -36,6 +40,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
+          ref: ${{ inputs.ref || github.sha }}
       - uses: ./.github/actions/prepare-environment
       - name: Download resources
         if: ${{ !inputs.resume }}
