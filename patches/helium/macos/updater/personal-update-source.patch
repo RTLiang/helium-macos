@@ -1,6 +1,6 @@
 --- a/components/helium_services/helium_services_helpers.cc
 +++ b/components/helium_services/helium_services_helpers.cc
-@@ -32,9 +32,9 @@
+@@ -28,9 +28,9 @@
  #endif
  
  #if defined(UPDATES_SUPPORTED)
@@ -15,7 +15,7 @@
  #endif
 --- a/build/apple/tweak_info_plist.py
 +++ b/build/apple/tweak_info_plist.py
-@@ -151,6 +151,17 @@
+@@ -146,6 +146,17 @@
          return False
      values = dict(zip(('MAJOR', 'MINOR', 'BUILD', 'PATCH'), groups))
  
@@ -33,7 +33,7 @@
      for key in version_format_for_key:
          plist[key] = _GetVersion(version_format_for_key[key], values, overrides)
  
-@@ -483,7 +483,7 @@
+@@ -528,7 +539,7 @@
              # http://lists.apple.com/archives/carbon-dev/2006/Jun/msg00139.html
              # BUILD will always be an increasing value, so BUILD_PATH gives us
              # something unique that meetings what LS wants.
