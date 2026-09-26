@@ -15,12 +15,10 @@ cd "$_src_dir"
 echo $(date +%s) | tee -a "$_root_dir/build_times_$_target_cpu.log"
 echo "status=running" >> $GITHUB_OUTPUT
 
-if ! env | grep -q SCCACHE; then
-    export SCCACHE_GHA_ENABLED=on
-    export SCCACHE_GHA_VERSION="$_target_cpu"
-fi
-
-export SCCACHE_WEBDAV_KEY_PREFIX="$_target_cpu"
+# Keep sccache on the runner's local disk. GitHub's Actions cache rejected
+# writes for every compilation in the previous multi-phase build.
+export SCCACHE_GHA_ENABLED=off
+export SCCACHE_CACHE_SIZE=2G
 
 _error_code=0
 timeout -k 7m -s SIGTERM "${_remaining_time}s" \
