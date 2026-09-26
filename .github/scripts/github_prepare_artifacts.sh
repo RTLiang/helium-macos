@@ -62,7 +62,7 @@ if [ -f "$_root_dir/build_finished_$_target_cpu.log" ]; then
     DELTA_ARG="--arm"
   fi
 
-  if [ -n "${MACOS_CERTIFICATE_NAME:-}" ]; then
+  if [ -n "${MACOS_CERTIFICATE_NAME:-}" ] && [ ! -f "$_root_dir/resources/personal_updates.json" ]; then
     PATH="$_src_dir/out/Default:$PATH" python3 "$_root_dir/devutils/generate_sparkle_deltas.py" \
       "$DELTA_ARG" "./release_asset/$_file_name" \
       --out ./release_asset

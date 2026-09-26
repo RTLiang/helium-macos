@@ -6,6 +6,8 @@ inputs:
   GITHUB_TOKEN:
     required: true
     type: string
+  PERSONAL_SPARKLE_PRIVATE_KEY:
+    type: string
   MACOS_CERTIFICATE:
     type: string
   MACOS_CERTIFICATE_PWD:
@@ -59,6 +61,13 @@ runs:
         PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ inputs.PROD_MACOS_NOTARIZATION_TEAM_ID }}
         PROD_MACOS_NOTARIZATION_PWD: ${{ inputs.PROD_MACOS_NOTARIZATION_PWD }}
         PROD_MACOS_SPECIAL_ENTITLEMENTS_PROFILE_B64: ${{ inputs.PROD_MACOS_SPECIAL_ENTITLEMENTS_PROFILE_B64 }}
+    - name: Sign personal update and prepare appcast
+      if: ${{ steps.build.outputs.status == 'finished' }}
+      run: ./github_prepare_personal_update.sh '${{ steps.bake.outputs.file_name }}'
+      shell: bash
+      env:
+        PERSONAL_SPARKLE_PRIVATE_KEY: ${{ inputs.PERSONAL_SPARKLE_PRIVATE_KEY }}
+        MACOS_CERTIFICATE_NAME: ${{ inputs.MACOS_CERTIFICATE_NAME }}
     - name: Upload part build artifact
       uses: actions/upload-artifact@v4
       with:
@@ -80,3 +89,5 @@ runs:
           ${{ steps.bake.outputs.deltas }}
           ./release_asset/${{ steps.bake.outputs.file_name }}
           ./${{ steps.bake.outputs.file_name }}.hashes.md
+          ./release_asset/appcast-arm64.xml
+          ./release_asset/personal-update.json

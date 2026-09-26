@@ -77,6 +77,7 @@ jobs:
         with:
           arch: ${{ inputs.arch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERSONAL_SPARKLE_PRIVATE_KEY: ${{ secrets.PERSONAL_SPARKLE_PRIVATE_KEY }}
           MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
           MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}

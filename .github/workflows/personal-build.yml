@@ -68,6 +68,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.sync.outputs.revision }}
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           pattern: helium_*_arm64-macos.dmg
@@ -79,18 +83,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           REVISION: ${{ needs.sync.outputs.revision }}
-        run: |
-          set -euo pipefail
-          dmg=$(find release_asset -maxdepth 1 -name '*.dmg' -print -quit)
-          test -n "$dmg"
-          tag="personal-${REVISION:0:12}"
-          notes="Personal arm64 build from macOS commit $REVISION. The app is ad hoc signed and is not notarized."
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$dmg" --clobber
-          else
-            gh release create "$tag" "$dmg" \
-              --target "$REVISION" \
-              --title "Personal Helium arm64 ${REVISION:0:12}" \
-              --notes "$notes" \
-              --prerelease
-          fi
+        run: python3 devutils/publish_personal_update.py release_asset

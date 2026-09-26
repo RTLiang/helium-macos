@@ -95,6 +95,7 @@ configure_build() {
   else
     write_gn_args "$arch" release "$pgo"
   fi
+  python3 "$_root_dir/devutils/configure_personal_updates.py" "$_root_dir"
   cd "$_src_dir"
   ___helium_install_cipd_deps
   ___helium_configure_siso
