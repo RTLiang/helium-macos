@@ -85,9 +85,6 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.bake.outputs.file_name }}
-        path: |
-          ${{ steps.bake.outputs.deltas }}
-          ./release_asset/${{ steps.bake.outputs.file_name }}
-          ./${{ steps.bake.outputs.file_name }}.hashes.md
-          ./release_asset/appcast-arm64.xml
-          ./release_asset/personal-update.json
+        # One upload root keeps the DMG and update metadata together after download.
+        path: ./release_asset/
+        if-no-files-found: error

@@ -54,7 +54,7 @@ if [ -f "$_root_dir/build_finished_$_target_cpu.log" ]; then
 
   # Use separate folder for build product, so that it can be used as individual asset in case the release action fails
   mkdir -p release_asset
-  mv "$_file_name" release_asset/
+  mv "$_file_name" "$_hash_name" release_asset/
 
   if [ "$_target_cpu" = "x86_64" ]; then
     DELTA_ARG="--x86"
