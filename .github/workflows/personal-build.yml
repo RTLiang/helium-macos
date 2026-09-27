@@ -4,9 +4,16 @@ on:
   schedule:
     - cron: '23 4 * * 0'
   workflow_dispatch:
+    inputs:
+      reuse_run_id:
+        description: 'Previous run containing arm64 build artifact (blank selects latest available)'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: personal-macos-build
@@ -18,6 +25,7 @@ jobs:
     outputs:
       revision: ${{ steps.update.outputs.revision }}
       changed: ${{ steps.update.outputs.changed }}
+      reuse_run_id: ${{ steps.checkpoint.outputs.run_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,6 +80,35 @@ jobs:
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
 
+      - name: Select previous build checkpoint
+        id: checkpoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REQUESTED_RUN: ${{ inputs.reuse_run_id }}
+        run: |
+          set -euo pipefail
+          selected=''
+          if [ -n "$REQUESTED_RUN" ]; then
+            [[ "$REQUESTED_RUN" =~ ^[0-9]+$ ]]
+            candidates="$REQUESTED_RUN"
+          else
+            candidates=$(gh run list --workflow personal-build.yml --status completed --limit 20 --json databaseId --jq '.[].databaseId')
+          fi
+          for run in $candidates; do
+            valid=$(gh api "repos/$GH_REPO/actions/runs/$run/artifacts" --paginate --jq 'any(.artifacts[]; .name == "github_build_artifact_arm64" and .expired == false)')
+            if [ "$valid" = true ]; then
+              selected="$run"
+              break
+            fi
+          done
+          if [ -n "$REQUESTED_RUN" ] && [ -z "$selected" ]; then
+            echo 'Requested run has no available arm64 checkpoint' >&2
+            exit 1
+          fi
+          echo "run_id=$selected" >> "$GITHUB_OUTPUT"
+          echo "Selected previous checkpoint: ${selected:-none; fresh build}"
+
   build:
     needs: sync
     if: ${{ needs.sync.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' }}
@@ -81,6 +118,7 @@ jobs:
       arch: arm64
       os: macos-latest
       ref: ${{ needs.sync.outputs.revision }}
+      reuse_run_id: ${{ needs.sync.outputs.reuse_run_id }}
 
   release:
     needs: [sync, build]
