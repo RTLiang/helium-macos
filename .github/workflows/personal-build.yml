@@ -2,7 +2,7 @@ name: Sync and release personal Helium for macOS
 
 on:
   schedule:
-    - cron: '23 4 * * *'
+    - cron: '23 4 * * 0'
   workflow_dispatch:
 
 permissions:
@@ -25,6 +25,9 @@ jobs:
           fetch-depth: 0
       - name: Merge macOS upstream and select patched Helium
         id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
@@ -44,12 +47,29 @@ jobs:
             git commit -m 'build: use latest patched Helium'
           fi
           revision=$(git rev-parse HEAD)
-          if [ "$revision" = "$previous" ]; then
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
-          else
+          changed=false
+          if [ "$revision" != "$previous" ]; then
             git push origin HEAD:main
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            changed=true
+          else
+            # Retry an unpublished revision, including the first personal update build.
+            prefix="personal-${revision:0:12}-"
+            published=$(gh release list --limit 100 --json tagName,isDraft \
+              --jq "any(.[]; (.isDraft == false) and (.tagName | startswith(\"$prefix\")))")
+            if [ "$published" = true ]; then
+              feed_dir=$(mktemp -d)
+              if gh release download personal-updates --pattern appcast-arm64.xml --dir "$feed_dir"; then
+                published=$(python3 -c 'import sys, xml.etree.ElementTree as ET; enclosure = ET.parse(sys.argv[1]).find("./channel/item/enclosure"); print("true" if enclosure is not None and sys.argv[2] in enclosure.get("url", "") else "false")' "$feed_dir/appcast-arm64.xml" "/releases/download/$prefix")
+              else
+                published=false
+              fi
+              rm -r "$feed_dir"
+            fi
+            if [ "$published" != true ]; then
+              changed=true
+            fi
           fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
 
   build:

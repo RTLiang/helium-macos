@@ -6,7 +6,9 @@
 
 ## 发布流程
 
-`Sync and release personal Helium for macOS` 每天同步上游，也可手动运行。
+`Sync and release personal Helium for macOS` 每周日北京时间 12:23 同步 macOS 上游并自动构建、签名、发布；Helium fork 每周日 10:17 先同步核心上游，也可手动运行。GitHub 定时任务可能延迟。
+
+有新提交或当前提交尚未成功分发时自动构建；已发布且没有改动时跳过。首次带个人自动更新功能的 DMG 仍需手动安装，之后浏览器通过个人更新 feed 获取版本。
 保留个人补丁的源码编译完成后，Actions 会：
 
 1. 签名和打包 DMG。
