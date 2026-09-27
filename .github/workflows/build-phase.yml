@@ -90,10 +90,10 @@ jobs:
       - name: Show incremental build plan
         if: ${{ !inputs.resume && inputs.reuse_run_id != '' }}
         run: |
-          cd build/src
-          python3 third_party/depot_tools/autoninja.py -C out/Default -n chrome/installer/mac > out/Default/reuse-plan.log
-          tail -20 out/Default/reuse-plan.log
-          echo "Planned actions: $(grep -c '^\[' out/Default/reuse-plan.log || true)"
+          source ./devutils/shared.sh
+          helium_build -n chrome/installer/mac > "$_out_dir/reuse-plan.log"
+          tail -20 "$_out_dir/reuse-plan.log"
+          echo "Planned actions: $(grep -c '^\[' "$_out_dir/reuse-plan.log" || true)"
       - uses: ./.github/actions/do-build
         id: build
         with:

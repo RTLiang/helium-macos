@@ -57,6 +57,21 @@ class Reuse(unittest.TestCase):
             module.overlay(buffer, Path(tmp))
             self.assertTrue(os.path.samefile(Path(tmp)/'bin/compiler', Path(tmp)/'bin/compiler-alias'))
 
+    def test_preserves_onboarding_generator_side_effect(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            strings = root / 'components/helium_onboarding/src/lib/strings.ts'
+            strings.parent.mkdir(parents=True)
+            strings.write_bytes(b'generated translations')
+            os.utime(strings, (1000, 1000))
+            header = root / 'out/Default/gen/components/helium_onboarding/helium_onboarding_localized_strings.h'
+            header.parent.mkdir(parents=True)
+            header.write_bytes(b'cached generator output')
+            module.overlay(archive({'chrome/VERSION': b'v'}), root)
+            self.assertEqual(strings.read_bytes(), b'generated translations')
+            self.assertEqual(strings.stat().st_mtime, 1000)
+            self.assertTrue(header.exists())
+
     def test_rejects_path_traversal(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):

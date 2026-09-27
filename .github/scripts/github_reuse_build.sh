@@ -26,3 +26,9 @@ if [ "$available_kib" -lt 15728640 ]; then
     echo 'Less than 15 GiB remains after restoring the build' >&2
     exit 1
 fi
+
+# Repair checkpoints that already lost the generator's undeclared TS output.
+if [ ! -f build/src/components/helium_onboarding/src/lib/strings.ts ]; then
+    echo 'Onboarding strings.ts missing; invalidating its cached generator header'
+    rm -f build/src/out/Default/gen/components/helium_onboarding/helium_onboarding_localized_strings.h
+fi

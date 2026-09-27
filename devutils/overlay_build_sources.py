@@ -11,6 +11,10 @@ import tempfile
 
 def overlay(stream, destination):
     destination = Path(destination).resolve()
+    # The onboarding generator declares its header in out/, but also writes a
+    # TypeScript side effect into the source tree. Its cached header must not
+    # survive while that side effect is removed.
+    generated_sources = {'components/helium_onboarding/src/lib/strings.ts'}
     seen = set()
     changed = 0
     scanned = 0
@@ -106,7 +110,7 @@ def overlay(stream, destination):
         for name in files + dirs:
             path = parent / name
             relative = path.relative_to(destination)
-            if relative.parts[0] in ('out', '.git') or str(relative) in seen:
+            if relative.parts[0] in ('out', '.git') or str(relative) in seen or str(relative) in generated_sources:
                 continue
             if path.is_symlink() or not path.is_dir():
                 path.unlink()
